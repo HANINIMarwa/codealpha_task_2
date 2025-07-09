@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>International University FAQ Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #ffffff;
+      --bg-dark: #121212;
+      --text-light: #222222;
+      --text-dark: #e5e7eb;
+      --input-bg-light: rgba(255, 255, 255, 0.25);
+      --input-bg-dark: rgba(0, 0, 0, 0.25);
+      --border-light: rgba(255, 255, 255, 0.2);
+      --border-dark: rgba(255, 255, 255, 0.1);
+      --btn-bg-light: linear-gradient(135deg, #4CAF50, #2E7D32);
+      --btn-bg-dark: linear-gradient(135deg, #2196F3, #0D47A1);
+      --glass-bg-light: rgba(255, 255, 255, 0.35);
+      --glass-bg-dark: rgba(0, 0, 0, 0.35);
+      --typing-indicator-color-light: #666;
+      --typing-indicator-color-dark: #999;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background-color 0.4s ease, color 0.4s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    html.dark, html.dark body {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .bg-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('components/background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      opacity: 0.8;
+      transition: opacity 0.4s ease, background-image 0.4s ease;
+    }
+
+    html.dark .bg-image {
+      background-image: url('components/background-dark.jpg');
+      opacity: 0.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 480px;
+      width: 90%;
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 25px;
+      background: var(--glass-bg-light);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid var(--border-light);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    html.dark .container {
+      background: var(--glass-bg-dark);
+      border-color: var(--border-dark);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      background: var(--btn-bg-light);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    html.dark .header h2 {
+      background: var(--btn-bg-dark);
+    }
+
+    .btn-toggle-theme {
+      background: transparent;
+      border: none;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-toggle-theme:hover {
+      transform: scale(1.1);
+    }
+
+    .btn-toggle-theme img {
+      width: 26px;
+      height: 26px;
+      transition: filter 0.4s ease;
+    }
+
+    html.dark .btn-toggle-theme img {
+      filter: invert(1);
+    }
+
+    .chat-window {
+      flex: 1;
+      max-height: 60vh;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      padding-right: 0.5rem;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    .chat-window::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-window::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-window::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+
+    html.dark .chat-window::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .messages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .message {
+      padding: 0.8rem 1rem;
+      border-radius: 15px;
+      max-width: 85%;
+      word-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      background: var(--btn-bg-light);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+
+    .message.bot {
+      background: rgba(240, 240, 240, 0.8);
+      color: black;
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+    }
+
+    html.dark .message.bot {
+      background: rgba(60, 60, 60, 0.8);
+      color: white;
+    }
+
+    .message.bot:first-child {
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      background: rgba(240, 240, 240, 0.8);
+      color: var(--typing-indicator-color-light);
+      border-radius: 15px;
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+      font-style: italic;
+    }
+
+    html.dark .typing-indicator {
+      background: rgba(60, 60, 60, 0.8);
+      color: var(--typing-indicator-color-dark);
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      margin-left: 0.5rem;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      background-color: var(--typing-indicator-color-light);
+      border-radius: 50%;
+      display: inline-block;
+      animation: typingAnimation 1.4s infinite both;
+    }
+
+    html.dark .typing-dots span {
+      background-color: var(--typing-indicator-color-dark);
+    }
+
+    .typing-dots span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingAnimation {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    .input-area {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border-radius: 16px;
+      border: none;
+      font-size: 1rem;
+      background: var(--input-bg-light);
+      color: var(--text-light);
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    html.dark input[type="text"] {
+      background: var(--input-bg-dark);
+      color: var(--text-dark);
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(0, 0, 0, 0.5);
+      transition: color 0.4s ease;
+    }
+
+    html.dark input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .send-btn {
+      padding: 0 1.2rem;
+      border-radius: 16px;
+      border: none;
+      font-weight: 600;
+      background: var(--btn-bg-light);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .send-btn:active {
+      transform: scale(0.98);
+    }
+
+    html.dark .send-btn {
+      background: var(--btn-bg-dark);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+      color: #aaa;
+      width: 100%;
+    }
+
+    html.dark footer {
+      color: #666;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem;
+        margin: 1rem auto;
+        width: 95%;
+      }
+
+      .header h2 {
+        font-size: 1.5rem;
+      }
+
+      .message {
+        max-width: 90%;
+      }
+
+      .input-area {
+        flex-direction: column;
+      }
+
+      .send-btn {
+        padding: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-image"></div>
+
+  <div class="container">
+    <div class="header">
+      <h2>International University FAQ</h2>
+      <button class="btn-toggle-theme" onclick="toggleTheme()">
+        <img src="https://img.icons8.com/ios-filled/50/moon-symbol.png" alt="Toggle theme">
+      </button>
+    </div>
+
+    <div class="chat-window" id="chat-window">
+      <div class="messages-container" id="messages-container">
+        <div class="message bot">👋 Hello! Ask me anything about the university.</div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type your question here..." autocomplete="off">
+      <button class="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <footer>© 2025 International University FAQ Chatbot</footer>
+
+  <script>
+    const faqs = {
+      "admission requirements": "International admission requirements:\n- Application\n- Transcripts\n- TOEFL/IELTS\n- Passport copy\n- Financial docs\n- Recommendation letters",
+      "application deadline": "Deadlines:\n- Fall: June 1\n- Spring: Nov 1\n- Summer: March 15",
+      "tuition fees": "Tuition:\n- Undergraduate: $22K-$35K\n- Graduate: $18K-$28K (includes insurance)",
+      "scholarships": "Scholarships:\n- Merit-based\n- Country-specific\n- Assistantships\n- Research fellowships",
+      "visa process": "Visa process:\n1. Receive I-20\n2. Pay SEVIS\n3. Schedule interview\n4. Prepare docs\n5. Processing: ~2 months",
+      "housing options": "Housing:\n- On-campus dorms\n- Apartments\n- Homestay\n- Off-campus help",
+      "popular programs": "Popular programs:\n- Computer Science\n- Business\n- Engineering\n- Intl Relations",
+      "english requirements": "English tests:\n- TOEFL: 80+\n- IELTS: 6.5+\n- Duolingo: 105+\n- PTE: 58+"
+    };
+
+    function showTypingIndicator() {
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'typing-indicator';
+      typingIndicator.id = 'typing-indicator';
+      typingIndicator.innerHTML = 'Typing<span class="typing-dots"><span></span><span></span><span></span></span>';
+      document.getElementById('messages-container').appendChild(typingIndicator);
+      document.getElementById('chat-window').scrollTo({
+        top: document.getElementById('chat-window').scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById('typing-indicator');
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('user-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      addMessage(question, 'user');
+      input.value = '';
+      
+      showTypingIndicator();
+
+      setTimeout(() => {
+        hideTypingIndicator();
+        const reply = getBestMatch(question);
+        addMessage(reply, 'bot');
+      }, 1500 + Math.random() * 1000); // Random delay between 1.5-2.5 seconds
+    }
+
+    function addMessage(text, sender) {
+      const messagesContainer = document.getElementById('messages-container');
+      const msg = document.createElement('div');
+      msg.className = `message ${sender}`;
+      msg.innerHTML = text.replace(/\n/g, '<br>');
+      messagesContainer.appendChild(msg);
+      
+      // Scroll to the new message
+      document.getElementById('chat-window').scrollTo({
+        top: document.getElementById('chat-window').scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    function getBestMatch(q) {
+      q = q.toLowerCase();
+      for (let key in faqs) {
+        if (q.includes(key)) return faqs[key];
+      }
+
+      const synonyms = {
+        "deadline": "application deadline",
+        "tuition": "tuition fees",
+        "cost": "tuition fees",
+        "scholarship": "scholarships",
+        "visa": "visa process",
+        "program": "popular programs",
+        "english": "english requirements",
+        "require": "admission requirements",
+        "housing": "housing options"
+      };
+
+      for (let word in synonyms) {
+        if (q.includes(word)) return faqs[synonyms[word]];
+      }
+
+      return "I'm here to help with admissions, programs, tuition, visa and housing. Try asking about one of those!";
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+    }
+
+    // Check for saved theme preference
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Handle Enter key press
+    document.getElementById('user-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Focus input on page load
+    window.addEventListener('load', function() {
+      document.getElementById('user-input').focus();
+    });
+  </script>
+</body>
+</html>
